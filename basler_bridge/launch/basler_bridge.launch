@@ -1,0 +1,116 @@
+<launch>
+
+    <!-- Args -->
+    <arg name="base_tof_name"         default="TOF0"/>
+    <arg name="base_tof_serial"         default="22100546"/>
+    <arg name="base_rgb_name"         default="RGB0"/>
+    <arg name="base_rgb_serial"         default="22099567"/>
+    <arg name="queue_size"        default="3"/>
+    <arg name="num_worker_threads"    default="8"/>
+    <arg name="machine"           default="localhost"/>
+    <arg name="nodelet_manager"   default="basler_bridge"/>
+    <arg name="start_manager"     default="true"/>
+    <arg name="use_machine"       default="true"/>
+    <arg name="respawn"           default="false"/>
+    <arg name="use_nodelet"       default="true"/>
+    <arg name="calibrate"         default="false"/>
+    <arg name="trigger"         default="false"/>
+    <arg name="receiver"         default="true"/>
+    <arg name="transmitter"         default="true"/>
+    <arg name="tf_target"         default="$(arg base_rgb_name)_rgb_optical_frame"/>
+
+    <!-- Nodelet Manager -->
+    <machine name="localhost" address="localhost" if="$(arg use_machine)"/>
+    <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager)" args="manager"
+    if="$(arg start_manager)" machine="$(arg machine)" output="screen">
+    <param name="num_worker_threads" value="$(arg num_worker_threads)" />
+    </node>
+
+    <!-- TOF -->
+    <node pkg="nodelet" type="nodelet" name="$(arg base_tof_name)_basler_tof_bridge" machine="$(arg machine)"
+    args="load basler_bridge/basler_tof_bridge $(arg nodelet_manager)" respawn="$(arg respawn)" if="$(arg transmitter)">
+        <param name="queue_size" type="int" value="$(arg queue_size)"/>
+        <param name="basler_name" type="string" value="$(arg base_tof_name)"/>
+        <param name="serial_number" type="string" value="$(arg base_tof_serial)"/>
+        <param name="trigger" type="bool" value="$(arg trigger)"/>
+    </node>
+
+    <!-- RGB -->
+    <node pkg="nodelet" type="nodelet" name="$(arg base_rgb_name)_basler_rgb_bridge" machine="$(arg machine)"
+    args="load basler_bridge/basler_rgb_bridge $(arg nodelet_manager)" respawn="$(arg respawn)" if="$(arg transmitter)">
+        <param name="queue_size" type="int" value="$(arg queue_size)"/>
+        <param name="basler_name" type="string" value="$(arg base_rgb_name)"/>
+        <param name="serial_number" type="string" value="$(arg base_rgb_serial)"/>
+        <param name="trigger" type="bool" value="$(arg trigger)"/>
+    </node>
+
+    <!-- Compressed RGB -->
+    <node pkg="nodelet" type="nodelet" name="$(arg base_rgb_name)_compressed_publisher" machine="$(arg machine)"
+    args="load od_compressed_image_transport/compressed_publisher $(arg nodelet_manager)" respawn="$(arg respawn)" if="$(arg transmitter)">
+        <param name="queue_size" type="int" value="$(arg queue_size)"/>
+        <param name="raw_topic_input" type="string" value="$(arg base_rgb_name)/image_color_rect"/>
+        <param name="compressed_topic_output" type="string" value="$(arg base_rgb_name)/image_color_rect/compressed"/>
+        <param name="retime" type="bool" value="false"/>
+    </node>
+
+    <!-- Registration -->
+    <node pkg="nodelet" type="nodelet" name="$(arg base_tof_name)_depth_registration" machine="$(arg machine)"
+    args="load depth_registration/depth_registration $(arg nodelet_manager)" respawn="$(arg respawn)" if="$(arg transmitter)">
+        <param name="queue_size" type="int" value="$(arg queue_size)"/>
+        <param name="calibration_mode" type="bool" value="$(arg calibrate)"/>
+        <param name="camera_name_from" type="string" value="$(arg base_tof_name)"/>
+        <param name="camera_serial_from" type="string" value="$(arg base_tof_serial)"/>
+        <param name="camera_name_to" type="string" value="$(arg base_rgb_name)"/>
+        <param name="camera_serial_to" type="string" value="$(arg base_rgb_serial)"/>
+        <rosparam param="registered_resolution">[640, 480]</rosparam>
+    </node>
+
+    <!-- Uncompressed RGB -->
+    <node pkg="nodelet" type="nodelet" name="$(arg base_rgb_name)_compressed_subscriber" machine="$(arg machine)"
+    args="load od_compressed_image_transport/compressed_subscriber $(arg nodelet_manager)" respawn="$(arg respawn)" if="$(arg receiver)">
+        <param name="queue_size" type="int" value="$(arg queue_size)"/>
+        <param name="compressed_topic_input" type="string" value="$(arg base_rgb_name)/image_color_rect/compressed"/>
+        <param name="raw_topic_output" type="string" value="$(arg base_rgb_name)/image_color_rect/republished"/>
+        <param name="retime" type="bool" value="false"/>
+    </node>
+
+    <!-- cloud generator -->
+    <node pkg="nodelet" type="nodelet" name="$(arg base_rgb_name)_cloud_generator" machine="$(arg machine)"
+        args="load cloud_generator/cloud_generator $(arg nodelet_manager)" respawn="$(arg respawn)" if="$(arg receiver)">
+        <param name="queue_size" type="int" value="$(arg queue_size)"/>
+        <param name="temporal_filter" type="bool" value="true"/>
+        <param name="temporal_error" type="double" value="0.1"/>
+        <param name="unorganize" type="bool" value="true"/>
+        <param name="republish" type="bool" value="true"/>
+        <param name="tf_target" type="string" value="$(arg tf_target)"/>
+        <param name="sub_depth_topic" type="string" value="$(arg base_rgb_name)/registered/depth_rect"/>
+        <param name="sub_rgb_topic" type="string" value="$(arg base_rgb_name)/image_color_rect/republished"/>
+        <param name="sub_depth_info_topic" type="string" value="$(arg base_rgb_name)/registered/camera_info"/>
+        <param name="sub_rgb_info_topic" type="string" value="$(arg base_rgb_name)/camera_info"/>
+        <param name="pub_edge_topic" type="string" value="$(arg base_rgb_name)/edge_rect"/>
+        <param name="pub_cloud_topic" type="string" value="$(arg base_rgb_name)/registered/points"/>
+    </node>
+
+    <!-- intensity point cloud 
+    <node pkg="nodelet" type="nodelet" name="$(arg base_tof_name)_points_xyz" machine="$(arg machine)"
+        args="load depth_image_proc/point_cloud_xyzi $(arg nodelet_manager)" respawn="$(arg respawn)">
+        <remap from="intensity/camera_info"             to="$(arg base_tof_name)/camera_info"/>
+        <remap from="depth/image_rect" to="$(arg base_tof_name)/depth_rect"/>
+        <remap from="intensity/image_rect" to="$(arg base_tof_name)/intensity_rect"/>
+        <remap from="depth/points"     to="$(arg base_tof_name)/points"/>
+        <param name="queue_size" type="int" value="$(arg queue_size)"/>
+    </node>
+    -->
+
+    <!-- rgb point cloud (registered) 
+    <node pkg="nodelet" type="nodelet" name="$(arg base_rgb_name)_points_xyzrgb_qhd" machine="$(arg machine)"
+        args="load depth_image_proc/point_cloud_xyzrgb $(arg nodelet_manager)" respawn="$(arg respawn)">
+        <remap from="rgb/camera_info"             to="$(arg base_rgb_name)/registered/camera_info"/>
+        <remap from="rgb/image_rect_color"        to="$(arg base_rgb_name)/registered/image_color_rect"/>
+        <remap from="depth_registered/image_rect" to="$(arg base_rgb_name)/registered/depth_rect"/>
+        <remap from="depth_registered/points"     to="$(arg base_rgb_name)/registered/points"/>
+        <param name="queue_size" type="int" value="$(arg queue_size)"/>
+    </node>
+    -->
+
+</launch>

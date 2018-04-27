@@ -1,0 +1,7 @@
+%YAML:1.0
+---
+resolution: !!opencv-matrix
+   rows: 2
+   cols: 1
+   dt: d
+   data: [ 640., 480. ]

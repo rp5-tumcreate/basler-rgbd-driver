@@ -1,0 +1,19 @@
+<library path="lib/libbasler_tof_bridge">
+  <class name="basler_bridge/basler_tof_bridge"
+         type="basler_bridge::BaslerTOFBridgeNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Nodelet for Baslet TOF Camera
+    </description>
+  </class>
+</library>
+
+<library path="lib/libbasler_rgb_bridge">
+  <class name="basler_bridge/basler_rgb_bridge"
+         type="basler_bridge::BaslerRGBBridgeNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Nodelet for Baslet RGB Camera
+    </description>
+  </class>
+</library>
