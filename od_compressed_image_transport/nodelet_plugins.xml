@@ -1,0 +1,30 @@
+<library path="lib/libcompressed_publisher">
+  <class name="od_compressed_image_transport/compressed_publisher"
+         type="od_compressed_image_transport::CompressedPublisherNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Compressed Publisher
+    </description>
+  </class>
+</library>
+
+<library path="lib/libcompressed_subscriber">
+  <class name="od_compressed_image_transport/compressed_subscriber"
+         type="od_compressed_image_transport::CompressedSubscriberNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Compressed Subscriber
+    </description>
+  </class>
+</library>
+
+<library path="lib/librepublisher">
+  <class name="od_compressed_image_transport/republisher"
+         type="od_compressed_image_transport::RepublisherNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Republisher
+    </description>
+  </class>
+</library>
+

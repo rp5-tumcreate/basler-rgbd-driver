@@ -1,0 +1,10 @@
+<library path="lib/libdepth_registration">
+  <class name="depth_registration/depth_registration"
+         type="depth_registration::DepthRegistrationNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Nodelet for Depth Registration
+    </description>
+  </class>
+</library>
+

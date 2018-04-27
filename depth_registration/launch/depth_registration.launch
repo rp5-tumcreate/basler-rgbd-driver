@@ -1,0 +1,22 @@
+<launch>
+
+    <!-- Args -->
+    <arg name="base_tof_name"         default="TOF0"/>
+    <arg name="base_rgb_name"         default="RGB0"/>
+    <arg name="queue_size"        default="5"/>
+    <arg name="num_worker_threads"    default="4"/>
+    <arg name="machine"           default="localhost"/>
+    <arg name="nodelet_manager"   default="depth_registration_manager"/>
+    <arg name="start_manager"     default="true"/>
+    <arg name="use_machine"       default="true"/>
+    <arg name="respawn"           default="false"/>
+    <arg name="use_nodelet"       default="true"/>
+
+    <!-- Nodelet Manager -->
+    <machine name="localhost" address="localhost" if="$(arg use_machine)"/>
+    <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager)" args="manager"
+    if="$(arg start_manager)" machine="$(arg machine)" output="screen">
+    <param name="num_worker_threads" value="$(arg num_worker_threads)" />
+    </node>
+
+</launch>

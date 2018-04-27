@@ -1,0 +1,4 @@
+string board_size
+float32 square_size
+---
+string response

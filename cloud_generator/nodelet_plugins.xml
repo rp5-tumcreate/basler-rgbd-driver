@@ -1,0 +1,9 @@
+<library path="lib/libcloud_generator">
+  <class name="cloud_generator/cloud_generator"
+         type="cloud_generator::CloudGeneratorNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+      Nodelet for Cloud Generation
+    </description>
+  </class>
+</library>
